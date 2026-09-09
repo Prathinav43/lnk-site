@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lnk — your phone and your PC, on one private link</title>
-<meta name="description" content="Lnk connects your Android phone to your Linux desktop over your own private Tailscale network. Browse your gallery and handle calls from your PC. Nothing passes through a third-party server.">
+<meta name="description" content="Lnk connects your Android phone to your Linux desktop over your own private Tailscale network. Browse your gallery and handle calls from your PC. Nothing passes through a third-party server. Currently in early access by request.">
 
 <meta property="og:title" content="Lnk — your phone and your PC, on one private link">
 <meta property="og:description" content="Browse your phone's gallery and handle calls from your Linux desktop, over your own private network.">
@@ -288,6 +288,11 @@
     flex: none;
   }
 
+  .request {
+    margin: 1.75rem 0 2rem;
+    font-size: 1.05rem;
+  }
+
   /* ---------- footer ---------- */
 
   footer {
@@ -427,13 +432,27 @@
       The Android app and the Linux desktop app both run, and the
       account system behind them is live. What's left is packaging
       them into something you can install without a developer
-      toolchain. Downloads will appear here when that's done.
+      toolchain.
     </p>
+  </section>
+
+  <hr class="rule">
+
+  <section class="shell">
+    <h2>Asking for access</h2>
     <p style="color:var(--muted);">
-      Lnk sends email for two reasons only: to verify your address
-      when you create an account, and to reset your password if you
-      ask it to. There is no mailing list and nothing else is ever
-      sent.
+      Lnk is open to a small group of testers rather than the general
+      public, so accounts are set up by hand for now. Email me and
+      I'll enable yours, then send you what you need to install it.
+    </p>
+    <p class="request">
+      <a class="mail" href="mailto:techincal.lnk@gmail.com?subject=Lnk%20access">techincal.lnk@gmail.com</a>
+    </p>
+    <p style="color:var(--muted); font-size:0.95rem;">
+      Your address is used to create your account and nothing else.
+      Lnk emails you twice at most: once to confirm your address, and
+      again only if you ask to reset your password. There is no
+      mailing list.
     </p>
   </section>
 
