@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lnk — your phone and your PC, on one private link</title>
+<meta name="description" content="Lnk connects your Android phone to your Linux desktop over your own private Tailscale network. Browse your gallery and handle calls from your PC. Nothing passes through a third-party server.">
+
+<meta property="og:title" content="Lnk — your phone and your PC, on one private link">
+<meta property="og:description" content="Browse your phone's gallery and handle calls from your Linux desktop, over your own private network.">
+<meta property="og:type" content="website">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --ink:        #0B0711;
+    --ink-raised: #150C24;
+    --royal:      #7C4DFF;
+    --royal-deep: #4A2A8F;
+    --glow:       #B79CFF;
+    --parchment:  #E9E2FA;
+    --muted:      #7E6FA0;
+    --hairline:   #241A38;
+    --online:     #5FE3A1;
+
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    background-image:
+      radial-gradient(ellipse 90% 55% at 18% -8%,
+                      rgba(124, 77, 255, 0.16), transparent 70%);
+    background-repeat: no-repeat;
+    color: var(--parchment);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell {
+    max-width: 61rem;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  a { color: var(--glow); }
+
+  a:focus-visible,
+  .mail:focus-visible {
+    outline: 2px solid var(--glow);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 2.25rem 0 0;
+    flex-wrap: wrap;
+  }
+
+  .wordmark {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: 0.42em;
+    margin: 0;
+    color: var(--parchment);
+  }
+
+  .stage-note {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.13em;
+    color: var(--muted);
+  }
+
+  /* ---------- hero ---------- */
+
+  .hero { padding: 7rem 0 5.5rem; }
+
+  .lede {
+    font-size: clamp(2.15rem, 5.6vw, 3.4rem);
+    line-height: 1.14;
+    letter-spacing: -0.022em;
+    font-weight: 500;
+    margin: 0 0 1.75rem;
+    max-width: 19ch;
+  }
+
+  .standfirst {
+    font-size: 1.12rem;
+    color: var(--muted);
+    max-width: 48ch;
+    margin: 0;
+  }
+
+  .standfirst strong {
+    color: var(--parchment);
+    font-weight: 500;
+  }
+
+  /* ---------- the link diagram ---------- */
+
+  .link-figure {
+    margin: 4.5rem 0 0;
+    padding: 0;
+  }
+
+  .link-figure svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    overflow: visible;
+  }
+
+  .node-label {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    fill: var(--muted);
+  }
+
+  .node-label--lead { fill: var(--parchment); }
+
+  .wire {
+    stroke: var(--royal);
+    stroke-width: 1.5;
+    fill: none;
+    stroke-dasharray: 620;
+    stroke-dashoffset: 620;
+    animation: draw 1.5s cubic-bezier(0.33, 0.9, 0.4, 1) 0.35s forwards;
+  }
+
+  .endpoint {
+    fill: var(--glow);
+    opacity: 0;
+    animation: appear 0.5s ease-out 0.15s forwards;
+  }
+
+  .endpoint-halo {
+    fill: var(--royal);
+    opacity: 0;
+    animation: appear-halo 0.6s ease-out 0.15s forwards;
+  }
+
+  .endpoint--far,
+  .endpoint-halo--far { animation-delay: 1.55s; }
+
+  .wire-caption {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    fill: var(--glow);
+    opacity: 0;
+    animation: appear 0.6s ease-out 1.9s forwards;
+  }
+
+  @keyframes draw       { to { stroke-dashoffset: 0; } }
+  @keyframes appear     { to { opacity: 1; } }
+  @keyframes appear-halo{ to { opacity: 0.24; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wire, .endpoint, .endpoint-halo, .wire-caption {
+      animation: none;
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+    .endpoint-halo { opacity: 0.24; }
+  }
+
+  /* ---------- rules and sections ---------- */
+
+  .rule {
+    height: 1px;
+    border: 0;
+    margin: 0;
+    background: linear-gradient(90deg,
+      var(--hairline), rgba(74, 42, 143, 0.55) 42%, var(--hairline));
+  }
+
+  section { padding: 4.5rem 0; }
+
+  h2 {
+    font-size: 1.3rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin: 0 0 1.5rem;
+  }
+
+  p { max-width: 64ch; }
+
+  /* ---------- what it does ---------- */
+
+  .capabilities {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 1.6rem;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  }
+
+  .capabilities li {
+    border-left: 1px solid var(--royal-deep);
+    padding-left: 1.15rem;
+  }
+
+  .capabilities h3 {
+    font-family: var(--mono);
+    font-size: 0.86rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    margin: 0 0 0.4rem;
+    color: var(--parchment);
+  }
+
+  .capabilities p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--muted);
+  }
+
+  /* ---------- requirements ---------- */
+
+  .requirements {
+    display: grid;
+    gap: 1.4rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  .requirements > div {
+    background: var(--ink-raised);
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    padding: 1.35rem 1.5rem;
+  }
+
+  .requirements dt {
+    font-family: var(--mono);
+    font-size: 0.86rem;
+    letter-spacing: 0.03em;
+    color: var(--glow);
+    margin-bottom: 0.45rem;
+  }
+
+  .requirements dd {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--muted);
+    max-width: 62ch;
+  }
+
+  /* ---------- status ---------- */
+
+  .status-line {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    color: var(--parchment);
+    margin: 0 0 1rem;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--online);
+    flex: none;
+  }
+
+  /* ---------- footer ---------- */
+
+  footer {
+    padding: 3rem 0 4.5rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem 3rem;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  footer p { margin: 0; }
+
+  .byline { color: var(--parchment); }
+
+  .mail {
+    font-family: var(--mono);
+    font-size: 0.86rem;
+    color: var(--glow);
+    text-decoration: none;
+    border-bottom: 1px solid var(--royal-deep);
+    padding-bottom: 1px;
+  }
+
+  .mail:hover { border-bottom-color: var(--glow); }
+
+  @media (max-width: 44rem) {
+    body { font-size: 16px; }
+    .shell { padding: 0 1.5rem; }
+    .hero { padding: 4rem 0 3.5rem; }
+    .lede { max-width: 16ch; }
+    section { padding: 3.25rem 0; }
+    .link-figure { margin-top: 3rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="shell masthead">
+  <p class="wordmark">LNK</p>
+  <p class="stage-note">In development</p>
+</header>
+
+<main>
+  <div class="shell hero">
+    <h1 class="lede">Your phone and your PC, on one private link.</h1>
+    <p class="standfirst">
+      Lnk pairs an Android phone with a Linux desktop over your own
+      Tailscale network, so your photos and calls reach your PC
+      <strong>without passing through anyone else's server</strong>.
+    </p>
+
+    <figure class="link-figure">
+      <svg viewBox="0 0 900 120" role="img"
+           aria-label="A phone and a desktop connected directly by an encrypted link over a private network.">
+        <circle class="endpoint-halo" cx="60" cy="52" r="19"/>
+        <circle class="endpoint" cx="60" cy="52" r="5.5"/>
+        <text class="node-label node-label--lead" x="60" y="88" text-anchor="middle">phone</text>
+
+        <path class="wire" d="M 78 52 L 822 52"/>
+        <text class="wire-caption" x="450" y="38" text-anchor="middle">encrypted · direct · yours</text>
+
+        <circle class="endpoint-halo endpoint-halo--far" cx="840" cy="52" r="19"/>
+        <circle class="endpoint endpoint--far" cx="840" cy="52" r="5.5"/>
+        <text class="node-label node-label--lead" x="840" y="88" text-anchor="middle">desktop</text>
+      </svg>
+    </figure>
+  </div>
+
+  <hr class="rule">
+
+  <section class="shell">
+    <h2>What it does</h2>
+    <ul class="capabilities">
+      <li>
+        <h3>Gallery on your desktop</h3>
+        <p>
+          Browse the photos on your phone from your PC, by folder,
+          with thumbnails. Nothing is uploaded anywhere.
+        </p>
+      </li>
+      <li>
+        <h3>Calls without reaching for the phone</h3>
+        <p>
+          Incoming calls appear on your desktop. Answer or decline
+          them there and keep working.
+        </p>
+      </li>
+      <li>
+        <h3>Pairing that remembers</h3>
+        <p>
+          Sign in once on each device. Lnk finds your PC on its own
+          after that, even when its address changes.
+        </p>
+      </li>
+    </ul>
+  </section>
+
+  <hr class="rule">
+
+  <section class="shell">
+    <h2>What it needs from you</h2>
+    <p style="margin-top:-0.4rem; margin-bottom:2rem; color:var(--muted);">
+      Two things Lnk cannot do on your behalf. Both are worth knowing
+      before you start.
+    </p>
+    <dl class="requirements">
+      <div>
+        <dt>Both devices on the same Tailscale network</dt>
+        <dd>
+          Lnk carries your data over Tailscale rather than a server of
+          its own, which is what keeps your photos private. Signing
+          each device in to Tailscale is something you do in Tailscale
+          itself — Lnk has no way to do it for you.
+        </dd>
+      </div>
+      <div>
+        <dt>Battery optimisation turned off for Lnk on your phone</dt>
+        <dd>
+          Android powers down the Wi-Fi radio soon after your screen
+          turns off, which drops the connection. Setting Lnk to
+          unrestricted in your battery settings keeps it alive. On
+          Samsung, Xiaomi and OnePlus phones this is required rather
+          than optional.
+        </dd>
+      </div>
+    </dl>
+  </section>
+
+  <hr class="rule">
+
+  <section class="shell">
+    <h2>Where it is now</h2>
+    <p class="status-line"><span class="dot"></span>Working, in daily use, not yet packaged</p>
+    <p style="color:var(--muted);">
+      The Android app and the Linux desktop app both run, and the
+      account system behind them is live. What's left is packaging
+      them into something you can install without a developer
+      toolchain. Downloads will appear here when that's done.
+    </p>
+    <p style="color:var(--muted);">
+      Lnk sends email for two reasons only: to verify your address
+      when you create an account, and to reset your password if you
+      ask it to. There is no mailing list and nothing else is ever
+      sent.
+    </p>
+  </section>
+
+  <hr class="rule">
+</main>
+
+<footer class="shell">
+  <p>
+    <span class="byline">Prathinav Meshram</span><br>
+    Nagpur, India
+  </p>
+  <p>
+    <a class="mail" href="mailto:techincal.lnk@gmail.com">techincal.lnk@gmail.com</a>
+  </p>
+</footer>
+
+</body>
+</html>
